@@ -1,0 +1,42 @@
+version: '3.1'
+
+services:
+
+  # Conteneur MongoDB
+  mongo:
+    image: mongo # Correspond à l'image mongo du DockerHub : https://hub.docker.com/_/mongo
+    volumes:
+      - mongodb-data:/data/db # Les données des bases de données de MongoDB sont stockées dans le répertoire /data/db. Il faut donc monter un volume sur cet emplacement. 
+    ports:
+      - 27018:27017 # On forward le traffic du port 27018 de l'hôte vers le port 27017 du conteneur qui correspond au port de MongoDB. Cela permettra de s'y connecter avec un client lourd comme Compass.
+    environment: # Variables d'environnement permettant l'initialisation du user de base. Les valeurs sont récupérées dans le fichier .env
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME} 
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
+  nginx: # NGINX LB
+    image: nginx 
+    ports:
+      - 8080:80 
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+  api-1: # API NodeJS
+    image: myapi:dev # Image qui a été précédemment construite
+    ports:
+      - 8081:3000 # On forward le traffic du port 8080 de l'hôte vers le port 3000 du conteneur qui correspond au port de l'API afin de la rendre accessible depuis l'host.
+    environment:
+      MONGODB_URI: "mongodb://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@mongo:27017"  # On définit la variable d'environnement permettant de se connecter à MongoDB
+  api-2: # API NodeJS
+    image: myapi:dev # Image qui a été précédemment construite
+    ports:
+      - 8082:3000 # On forward le traffic du port 8080 de l'hôte vers le port 3000 du conteneur qui correspond au port de l'API afin de la rendre accessible depuis l'host.
+    environment:
+      MONGODB_URI: "mongodb://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@mongo:27017"  # On définit la variable d'environnement permettant de se connecter à MongoDB 
+  api-3: # API NodeJS
+    image: myapi:dev # Image qui a été précédemment construite
+    ports:
+      - 8083:3000 # On forward le traffic du port 8080 de l'hôte vers le port 3000 du conteneur qui correspond au port de l'API afin de la rendre accessible depuis l'host.
+    environment:
+      MONGODB_URI: "mongodb://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@mongo:27017"  # On définit la variable d'environnement permettant de se connecter à MongoDB 
+
+volumes:
+  mongodb-data:
+    external: true # Permet de réutiliser le volume précédemment créé, sinon un nouveau volume sera créé et les données seront perdues.
